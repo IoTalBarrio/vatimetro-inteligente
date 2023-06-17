@@ -34,3 +34,10 @@ $ sudo usermod -a -G dialout $USER
 $ sudo usermod -a -G tty $USER
 $ sudo chmod a+rw /dev/ttyUSB0
 ~~~
+
+Cada vez que se conecte
+~~~shell
+$ lsusb
+$ ls -al /dev/ttyUSB*
+$ sudo chmod 0777 /dev/ttyUSB0
+~~~
