@@ -2,15 +2,15 @@
 #include <WiFi.h>
 #include <HTTPClient.h>
 #include "EmonLib.h"   //https://github.com/openenergymonitor/EmonLib
+#include "variables.h"
 //----------------------------
 
 
 //Credenciales
-const char * ssid = "FLOR";
-const char * password = "39769017";
-String GOOGLE_SCRIPT_ID = "AKfycbxYAnZeaAvqqrL8fpogsdGQjKbhXuKFGsKxmN2v4cL1jrwigu7KGvVtYnmsEQv3Iiec1Q";
+const char * ssid = SSID;
+const char * password = PASSWORD;
+String GOOGLE_SCRIPT_ID = DEP_KEY;
 //---------------------------------------------------------------------
-
 
 
 //Calibracion de corriente y tension
