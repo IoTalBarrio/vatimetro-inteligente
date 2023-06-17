@@ -19,17 +19,17 @@ EnergyMonitor emon_2;
 EnergyMonitor emon_3;
 
 #define vCalibration_1 39.44
-#define currCalibration_1 2.38974
+#define currCalibration_1 8.1145913
 #define PowerFactor_1 1.7  //????? -> Falta calibrar
 
 
 #define vCalibration_2 27.4
-#define currCalibration_2 2.38974
+#define currCalibration_2 5.91999
 #define PowerFactor_2 1.7  //????? -> Falta calibrar
 
 
-#define vCalibration_3 13.65
-#define currCalibration_3 2.38974
+#define vCalibration_3 13
+#define currCalibration_3 0.28786
 #define PowerFactor_3 1.7  //????? -> Falta calibrar
 
 
@@ -147,6 +147,7 @@ void Console_Power() {
 void Send_Data()
 {
     //Primer par
+    String param;
     param  = "vrmsY="+String(emon_1.Vrms,5);                 //  Tension RMS
     param += "&irmsY="+String(emon_1.Irms,8);                //  Corriente RMS
     param += "&fpY="+String(emon_1.powerFactor,5);           //  Factor de potencia
@@ -166,6 +167,8 @@ void Send_Data()
     param += "&fpR="+String(emon_3.powerFactor,5);           //  Factor de potencia
     param += "&prealR="+String(emon_3.realPower,5);          //  Potencia Real
     param += "&paparenteR="+String(emon_3 .apparentPower,5);  //  Potencia aparente
+
+    param.replace(".", ",");
 
     Serial.println(param);
     write_to_google_sheet(param);
