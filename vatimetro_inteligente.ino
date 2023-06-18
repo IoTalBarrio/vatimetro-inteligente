@@ -1,199 +1,235 @@
+/**
+ * Vatimetro IoT al barrio
+ * IoTalBarrio@gmail.com
+ */
+
 //----------------------------
 #include <WiFi.h>
 #include <HTTPClient.h>
-#include "EmonLib.h"   //https://github.com/openenergymonitor/EmonLib
+#include "EmonLib.h" //https://github.com/openenergymonitor/EmonLib
 #include "variables.h"
 //----------------------------
 
-
-//Credenciales
-const char * ssid = SSID;
-const char * password = PASSWORD;
+// Credenciales
+const char *ssid = SSID;
+const char *password = PASSWORD;
 String GOOGLE_SCRIPT_ID = DEP_KEY;
-//---------------------------------------------------------------------
+//--------------------------------
 
 
-//Calibracion de corriente y tension
-EnergyMonitor emon_1;
-EnergyMonitor emon_2;
-EnergyMonitor emon_3;
+EnergyMonitor emon_Y;
+EnergyMonitor emon_B;
+EnergyMonitor emon_R;
 
+// Calibracion de corriente y tension
 #define vCalibration_1 145.501599832877
 #define currCalibration_1 2.38974
-#define PowerFactor_1 1.7  //????? -> Falta calibrar
-
+#define PowerFactor_1 1.7 //????? -> Falta calibrar
 
 #define vCalibration_2 150.569527071648
 #define currCalibration_2 2.744335601
-#define PowerFactor_2 1.7  //????? -> Falta calibrar
-
+#define PowerFactor_2 1.7 //????? -> Falta calibrar
 
 #define vCalibration_3 128.272474981946
 #define currCalibration_3 2.38974
-#define PowerFactor_3 1.7  //????? -> Falta calibrar
+#define PowerFactor_3 1.7 //????? -> Falta calibrar
 
+// Pines
+/*
+(EN) (VP) (VN)
+ ¿?   36   39   34   35   32   33
+      |    |    |    |    |    |
+      YV   YA   RV   RA   BA   RA
+*/
+#define PIN_Y_V 36
+#define PIN_Y_A 35
+#define PIN_B_V 39
+#define PIN_B_A 32
+#define PIN_R_V 34
+#define PIN_R_A 33
 
+/**
+ * 
+*/
+void setup()
+{
 
-
- void setup() {
-
-  //Inicia la comunicacion serial
+  // Inicia la comunicacion serial
   Serial.begin(115200);
 
-  //Configuracion de los sensores
-  emon_1.voltage(36, vCalibration_1, PowerFactor_1); // Voltage: input pin, calibration, phase_shift
-  emon_1.current(35, currCalibration_1); // Current: input pin, calibration.
+  // Configuracion de los sensores
+  emon_Y.voltage(PIN_Y_V, vCalibration_1, PowerFactor_1); // Voltage: input pin, calibration, phase_shift
+  emon_Y.current(PIN_Y_A, currCalibration_1);             // Current: input pin, calibration.
 
-  emon_2.voltage(39, vCalibration_2, PowerFactor_2); // Voltage: input pin, calibration, phase_shift
-  emon_2.current(32, currCalibration_2); // Current: input pin, calibration.
+  emon_B.voltage(PIN_B_V, vCalibration_2, PowerFactor_2); // Voltage: input pin, calibration, phase_shift
+  emon_B.current(PIN_B_A, currCalibration_2);             // Current: input pin, calibration.
 
-  emon_3.voltage(34, vCalibration_3, PowerFactor_3); // Voltage: input pin, calibration, phase_shift
-  emon_3.current(33, currCalibration_3); // Current: input pin, calibration.
+  emon_R.voltage(PIN_R_V, vCalibration_3, PowerFactor_3); // Voltage: input pin, calibration, phase_shift
+  emon_R.current(PIN_R_A, currCalibration_3);             // Current: input pin, calibration.
 
-  //Calculos de prueba
-  emon_1.calcVI(500, 5000);
-  emon_1.calcVI(500, 5000);
-  emon_1.calcVI(500, 5000);
+  // Calculos de prueba
+  emon_Y.calcVI(500, 5000);
+  emon_Y.calcVI(500, 5000);
+  emon_Y.calcVI(500, 5000);
 
-  emon_2.calcVI(500, 5000);
-  emon_2.calcVI(500, 5000);
-  emon_2.calcVI(500, 5000);
+  emon_B.calcVI(500, 5000);
+  emon_B.calcVI(500, 5000);
+  emon_B.calcVI(500, 5000);
 
-  emon_3.calcVI(500, 5000);
-  emon_3.calcVI(500, 5000);
-  emon_3.calcVI(500, 5000);
+  emon_R.calcVI(500, 5000);
+  emon_R.calcVI(500, 5000);
+  emon_R.calcVI(500, 5000);
 
-  //Conexion con la red WIFI
+  // Conexion con la red WIFI
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
 
+  // Led de depuración
+  pinMode(LED_BUILTIN, OUTPUT);
+
   Serial.print("Connecting to Wi-Fi");
-  while (WiFi.status() != WL_CONNECTED) {
+  while (WiFi.status() != WL_CONNECTED)
+  {
     delay(500);
     Serial.print(".");
+    encenderLED(1, 100);
   }
   Serial.println("OK");
+  encenderLED(5, 500);
 }
 
-
-
-
-void loop() {
-  //Ralizar el calculo de potencia con los sensores
+void loop()
+{
+  // Ralizar el calculo de potencia con los sensores
   Console_Power();
-  //Enviar los datos a google sheets
+  // Enviar los datos a google sheets
   Send_Data();
 }
 
+void Console_Power()
+{
+  emon_Y.calcVI(500, 5000);
+  emon_B.calcVI(500, 5000);
+  emon_R.calcVI(500, 5000);
 
-void Console_Power() {
-    emon_1.calcVI(500, 5000);
-    emon_2.calcVI(500, 5000);
-    emon_3.calcVI(500, 5000);
+  Serial.println("Primer Par de sensores:");
+  Serial.print("Vrms: ");
+  Serial.print(emon_Y.Vrms, 2);
+  Serial.print("V");
+  Serial.print("\tIrms: ");
+  Serial.print(emon_Y.Irms, 4);
+  Serial.print("A");
+  Serial.print("\tPotencia Aparente: ");
+  Serial.print(emon_Y.apparentPower, 4);
+  Serial.print("VA");
+  Serial.print("\tPotencia Real: ");
+  Serial.print(emon_Y.realPower, 4);
+  Serial.print("W");
+  Serial.print("\tFactor de potencia: ");
+  Serial.print(emon_Y.powerFactor, 4);
+  Serial.println("W");
 
-    Serial.println("Primer Par de sensores:");
-    Serial.print("Vrms: ");
-    Serial.print(emon_1.Vrms, 2);
-    Serial.print("V");
-    Serial.print("\tIrms: ");
-    Serial.print(emon_1.Irms, 4);
-    Serial.print("A");
-    Serial.print("\tPotencia Aparente: ");
-    Serial.print(emon_1.apparentPower, 4);
-    Serial.print("VA");
-    Serial.print("\tPotencia Real: ");
-    Serial.print(emon_1.realPower, 4);
-    Serial.print("W");
-    Serial.print("\tFactor de potencia: ");
-    Serial.print(emon_1.powerFactor, 4);
-    Serial.println("W");
+  Serial.println("Segundo Par de sensores:");
+  Serial.print("Vrms: ");
+  Serial.print(emon_B.Vrms, 2);
+  Serial.print("V");
+  Serial.print("\tIrms: ");
+  Serial.print(emon_B.Irms, 4);
+  Serial.print("A");
+  Serial.print("\tPotencia Aparente: ");
+  Serial.print(emon_B.apparentPower, 4);
+  Serial.print("VA");
+  Serial.print("\tPotencia Real: ");
+  Serial.print(emon_B.realPower, 4);
+  Serial.print("W");
+  Serial.print("\tFactor de potencia: ");
+  Serial.print(emon_B.powerFactor, 4);
+  Serial.println("W");
 
-    Serial.println("Segundo Par de sensores:");
-    Serial.print("Vrms: ");
-    Serial.print(emon_2.Vrms, 2);
-    Serial.print("V");
-    Serial.print("\tIrms: ");
-    Serial.print(emon_2.Irms, 4);
-    Serial.print("A");
-    Serial.print("\tPotencia Aparente: ");
-    Serial.print(emon_2.apparentPower, 4);
-    Serial.print("VA");
-    Serial.print("\tPotencia Real: ");
-    Serial.print(emon_2.realPower, 4);
-    Serial.print("W");
-    Serial.print("\tFactor de potencia: ");
-    Serial.print(emon_2.powerFactor, 4);
-    Serial.println("W");
-
-    Serial.println("Tercer Par de sensores:");
-    Serial.print("Vrms: ");
-    Serial.print(emon_3.Vrms, 2);
-    Serial.print("V");
-    Serial.print("\tIrms: ");
-    Serial.print(emon_3.Irms, 4);
-    Serial.print("A");
-    Serial.print("\tPotencia Aparente: ");
-    Serial.print(emon_3.apparentPower, 4);
-    Serial.print("VA");
-    Serial.print("\tPotencia Real: ");
-    Serial.print(emon_3.realPower, 4);
-    Serial.print("W");
-    Serial.print("\tFactor de potencia: ");
-    Serial.print(emon_3.powerFactor, 4);
-    Serial.println("W");
+  Serial.println("Tercer Par de sensores:");
+  Serial.print("Vrms: ");
+  Serial.print(emon_R.Vrms, 2);
+  Serial.print("V");
+  Serial.print("\tIrms: ");
+  Serial.print(emon_R.Irms, 4);
+  Serial.print("A");
+  Serial.print("\tPotencia Aparente: ");
+  Serial.print(emon_R.apparentPower, 4);
+  Serial.print("VA");
+  Serial.print("\tPotencia Real: ");
+  Serial.print(emon_R.realPower, 4);
+  Serial.print("W");
+  Serial.print("\tFactor de potencia: ");
+  Serial.print(emon_R.powerFactor, 4);
+  Serial.println("W");
 }
-
 
 void Send_Data()
 {
-    //Primer par
-    String param;
-    param  = "vrmsY="+String(emon_1.Vrms,5);                 //  Tension RMS
-    param += "&irmsY="+String(emon_1.Irms,8);                //  Corriente RMS
-    param += "&fpY="+String(emon_1.powerFactor,5);           //  Factor de potencia
-    param += "&prealY="+String(emon_1.realPower,5);          //  Potencia Real
-    param += "&paparenteY="+String(emon_1.apparentPower,5);  //  Potencia aparente
-    
-    //Segundo par
-    param += "&vrmsB="+String(emon_2.Vrms,5);                 //  Tension RMS
-    param += "&irmsB="+String(emon_2.Irms,8);                //  Corriente RMS
-    param += "&fpB="+String(emon_2.powerFactor,5);           //  Factor de potencia
-    param += "&prealB="+String(emon_2.realPower,5);          //  Potencia Real
-    param += "&paparenteB="+String(emon_2.apparentPower,5);  //  Potencia aparente
-    
-    //Tercer par
-    param += "&vrmsR="+String(emon_3.Vrms,5);                 //  Tension RMS
-    param += "&irmsR="+String(emon_3.Irms,8);                //  Corriente RMS
-    param += "&fpR="+String(emon_3.powerFactor,5);           //  Factor de potencia
-    param += "&prealR="+String(emon_3.realPower,5);          //  Potencia Real
-    param += "&paparenteR="+String(emon_3 .apparentPower,5);  //  Potencia aparente
+  // Primer par
+  String param;
+  param = "vrmsY=" + String(emon_Y.Vrms, 5);                 //  Tension RMS
+  param += "&irmsY=" + String(emon_Y.Irms, 8);               //  Corriente RMS
+  param += "&fpY=" + String(emon_Y.powerFactor, 5);          //  Factor de potencia
+  param += "&prealY=" + String(emon_Y.realPower, 5);         //  Potencia Real
+  param += "&paparenteY=" + String(emon_Y.apparentPower, 5); //  Potencia aparente
 
-    param.replace(".", ",");
+  // Segundo par
+  param += "&vrmsB=" + String(emon_B.Vrms, 5);               //  Tension RMS
+  param += "&irmsB=" + String(emon_B.Irms, 8);               //  Corriente RMS
+  param += "&fpB=" + String(emon_B.powerFactor, 5);          //  Factor de potencia
+  param += "&prealB=" + String(emon_B.realPower, 5);         //  Potencia Real
+  param += "&paparenteB=" + String(emon_B.apparentPower, 5); //  Potencia aparente
 
-    Serial.println(param);
-    write_to_google_sheet(param);
+  // Tercer par
+  param += "&vrmsR=" + String(emon_R.Vrms, 5);               //  Tension RMS
+  param += "&irmsR=" + String(emon_R.Irms, 8);               //  Corriente RMS
+  param += "&fpR=" + String(emon_R.powerFactor, 5);          //  Factor de potencia
+  param += "&prealR=" + String(emon_R.realPower, 5);         //  Potencia Real
+  param += "&paparenteR=" + String(emon_R.apparentPower, 5); //  Potencia aparente
 
+  param.replace(".", ",");
+
+  Serial.println(param);
+  write_to_google_sheet(param);
 }
 
-void write_to_google_sheet(String params) {
-   HTTPClient http;
-   String url="https://script.google.com/macros/s/"+GOOGLE_SCRIPT_ID+"/exec?"+params;
-    Serial.println("Subiendo datos a google sheets");
+void write_to_google_sheet(String params)
+{
+  HTTPClient http;
+  String url = "https://script.google.com/macros/s/" + GOOGLE_SCRIPT_ID + "/exec?" + params;
+  Serial.println("Subiendo datos a google sheets");
 
-    //starts posting data to google sheet
-    http.begin(url.c_str());
-    http.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS);
-    int httpCode = http.GET();  
-    Serial.print("HTTP Status Code: ");
-    Serial.println(httpCode);
-    
-    //getting response from google sheet
-  
-    String payload;
-    if (httpCode > 0) {
-        payload = http.getString();
-        Serial.println("Payload: "+payload);     
-    }
+  // starts posting data to google sheet
+  http.begin(url.c_str());
+  http.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS);
+  int httpCode = http.GET();
+  Serial.print("HTTP Status Code: ");
+  Serial.println(httpCode);
 
-    http.end();
+  // Respuesta de Google Apps Scripts Web
+  String payload;
+  if (httpCode > 0)
+  {
+    payload = http.getString();
+    Serial.println("Cuerpo de respuesta HTTP: " + payload);
+    encenderLED(3, 500);
+  }
+  else
+  {
+    Serial.println("No hay respuesta");
+    encenderLED(2, 500);
+  }
+  http.end();
+}
+
+void encenderLED(int veces, int retardo)
+{
+  for (int i = 0; i < veces; i++)
+  {
+    digitalWrite(LED_BUILTIN, HIGH); // Enciende el LED_BUILTIN
+    delay(retardo);                  // Espera el retardo especificado
+    digitalWrite(LED_BUILTIN, LOW);  // Apaga el LED_BUILTIN
+    delay(retardo);                  // Espera el retardo especificado
+  }
 }
