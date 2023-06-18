@@ -38,6 +38,12 @@ $ sudo chmod a+rw /dev/ttyUSB0
 Cada vez que se conecte
 ~~~shell
 $ lsusb
+...
+Bus 001 Device 003: ID 10c4:ea60 Silicon Labs CP210x UART Bridge
+...
 $ ls -al /dev/ttyUSB*
-$ sudo chmod 0777 /dev/ttyUSB0
+crw-rw---- 1 root dialout 188, 0 jun 18 12:38 /dev/ttyUSB0
+$ sudo chmod 0666 /dev/ttyUSB0
+$ ls -al /dev/ttyUSB*
+crw-rw-rw- 1 root dialout 188, 0 jun 18 12:38 /dev/ttyUSB0./
 ~~~
