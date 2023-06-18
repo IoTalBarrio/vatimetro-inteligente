@@ -18,18 +18,18 @@ EnergyMonitor emon_1;
 EnergyMonitor emon_2;
 EnergyMonitor emon_3;
 
-#define vCalibration_1 39.44
-#define currCalibration_1 8.1145913
+#define vCalibration_1 145.501599832877
+#define currCalibration_1 2.38974
 #define PowerFactor_1 1.7  //????? -> Falta calibrar
 
 
-#define vCalibration_2 27.4
-#define currCalibration_2 5.91999
+#define vCalibration_2 150.569527071648
+#define currCalibration_2 2.744335601
 #define PowerFactor_2 1.7  //????? -> Falta calibrar
 
 
-#define vCalibration_3 13
-#define currCalibration_3 0.28786
+#define vCalibration_3 128.272474981946
+#define currCalibration_3 2.38974
 #define PowerFactor_3 1.7  //????? -> Falta calibrar
 
 
