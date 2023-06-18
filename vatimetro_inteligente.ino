@@ -10,11 +10,13 @@
 #include "variables.h"
 //----------------------------
 
-// Credenciales
+// Conexión WIFI
 const char *ssid = SSID;
 const char *password = PASSWORD;
+
+// Web app ID del despliegue webyGoogle Apps Script del desplie
 String GOOGLE_SCRIPT_ID = DEP_KEY;
-//--------------------------------
+
 
 
 EnergyMonitor emon_Y;
@@ -22,17 +24,17 @@ EnergyMonitor emon_B;
 EnergyMonitor emon_R;
 
 // Calibracion de corriente y tension
-#define vCalibration_1 145.501599832877
-#define currCalibration_1 2.38974
-#define PowerFactor_1 1.7 //????? -> Falta calibrar
+#define vCalibration_Y 39.44
+#define currCalibration_Y 8.1145913
+#define PowerFactor_Y 1.7 //????? -> Falta calibrar
 
-#define vCalibration_2 150.569527071648
-#define currCalibration_2 2.744335601
-#define PowerFactor_2 1.7 //????? -> Falta calibrar
+#define vCalibration_B 27.4
+#define currCalibration_B 5.91999
+#define PowerFactor_B 1.7 //????? -> Falta calibrar
 
-#define vCalibration_3 128.272474981946
-#define currCalibration_3 2.38974
-#define PowerFactor_3 1.7 //????? -> Falta calibrar
+#define vCalibration_R 12.8272474981946
+#define currCalibration_R 0.28786
+#define PowerFactor_R 1.7 //????? -> Falta calibrar
 
 // Pines
 /*
@@ -58,14 +60,14 @@ void setup()
   Serial.begin(115200);
 
   // Configuracion de los sensores
-  emon_Y.voltage(PIN_Y_V, vCalibration_1, PowerFactor_1); // Voltage: input pin, calibration, phase_shift
-  emon_Y.current(PIN_Y_A, currCalibration_1);             // Current: input pin, calibration.
+  emon_Y.voltage(PIN_Y_V, vCalibration_Y, PowerFactor_Y); // Voltage: input pin, calibration, phase_shift
+  emon_Y.current(PIN_Y_A, currCalibration_Y);             // Current: input pin, calibration.
 
-  emon_B.voltage(PIN_B_V, vCalibration_2, PowerFactor_2); // Voltage: input pin, calibration, phase_shift
-  emon_B.current(PIN_B_A, currCalibration_2);             // Current: input pin, calibration.
+  emon_B.voltage(PIN_B_V, vCalibration_B, PowerFactor_B); // Voltage: input pin, calibration, phase_shift
+  emon_B.current(PIN_B_A, currCalibration_B);             // Current: input pin, calibration.
 
-  emon_R.voltage(PIN_R_V, vCalibration_3, PowerFactor_3); // Voltage: input pin, calibration, phase_shift
-  emon_R.current(PIN_R_A, currCalibration_3);             // Current: input pin, calibration.
+  emon_R.voltage(PIN_R_V, vCalibration_R, PowerFactor_R); // Voltage: input pin, calibration, phase_shift
+  emon_R.current(PIN_R_A, currCalibration_R);             // Current: input pin, calibration.
 
   // Calculos de prueba
   emon_Y.calcVI(500, 5000);
@@ -92,10 +94,10 @@ void setup()
   {
     delay(500);
     Serial.print(".");
-    encenderLED(1, 100);
+    encenderLED(1, 1000);
   }
   Serial.println("OK");
-  encenderLED(5, 500);
+  encenderLED(5, 100);
 }
 
 void loop()
