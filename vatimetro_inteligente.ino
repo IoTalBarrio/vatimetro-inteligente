@@ -8,7 +8,7 @@
 #include <HTTPClient.h>
 #include "EmonLib.h" //https://github.com/openenergymonitor/EmonLib
 #include "variables.h"
-//----------------------------
+
 
 // Conexión WIFI
 const char *ssid = SSID;
@@ -18,7 +18,7 @@ const char *password = PASSWORD;
 String GOOGLE_SCRIPT_ID = DEP_KEY;
 
 
-
+// Energy Monitors
 EnergyMonitor emon_Y;
 EnergyMonitor emon_B;
 EnergyMonitor emon_R;
