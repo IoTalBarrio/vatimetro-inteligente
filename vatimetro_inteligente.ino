@@ -6,7 +6,6 @@
 //----------------------------
 #include <WiFi.h>
 #include <HTTPClient.h>
-#include "EmonLib.h" //https://github.com/openenergymonitor/EmonLib
 #include "variables.h"
 
 
@@ -16,25 +15,6 @@ const char *password = PASSWORD;
 
 // Web app ID del despliegue webyGoogle Apps Script del desplie
 String GOOGLE_SCRIPT_ID = DEP_KEY;
-
-
-// Energy Monitors
-EnergyMonitor emon_Y;
-EnergyMonitor emon_B;
-EnergyMonitor emon_R;
-
-// Calibracion de corriente y tension
-#define vCalibration_Y 39.44
-#define currCalibration_Y 8.1145913
-#define PowerFactor_Y 1.7 //????? -> Falta calibrar
-
-#define vCalibration_B 27.4
-#define currCalibration_B 5.91999
-#define PowerFactor_B 1.7 //????? -> Falta calibrar
-
-#define vCalibration_R 12.8272474981946
-#define currCalibration_R 0.28786
-#define PowerFactor_R 1.7 //????? -> Falta calibrar
 
 const int SampleCount = 500;  // At 8900 samples per second, about 2 cycles of 60 Hz.
 float Samples[SampleCount];
