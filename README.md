@@ -23,7 +23,7 @@ DEPKEY=<"Llave de despliegue">
 URL=https://script.google.com/macros/s/$DEPKEY/exec?hoja
 curl -L $URL
 curl -d "" -L $URL
-DATA=$(./generador.sh)
+DATA=$(./generador.sh 0 1024)
 curl -H 'Content-Type: application/json' -d $DATA -L $URL?hoja=test
 ~~~
 
@@ -33,6 +33,10 @@ Cada vez que hace hace un cambio se tiene que re-desplegar la web app
 ### Pruebas
 
 ## Compilación ESP32
+
+### Librerías
+
+* HTTPSRedirect https://github.com/electronicsguy/HTTPSRedirect
 
 ### Linux
 

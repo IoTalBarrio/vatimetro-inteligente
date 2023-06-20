@@ -4,8 +4,8 @@
  */
 
 //----------------------------
-#include <WiFi.h>
-#include <HTTPClient.h>
+#include <./libraries/WiFi/src/WiFi.h>
+#include <./libraries/HTTPSRedirect/HTTPSRedirect.h>
 #include <ArduinoJson.h>
 #include "variables.h"
 
@@ -16,6 +16,11 @@ const char *password = PASSWORD;
 // Web app ID del despliegue webyGoogle Apps Script del desplie
 const String GOOGLE_SCRIPT_ID = DEP_KEY;
 const String HOJA = "test";
+const char* host = "script.google.com";
+const int httpsPort = 443;
+const char* fingerprint = "";
+String url = String("/macros/s/") + String(DEP_KEY) + "/exec?hoja="+HOJA;
+HTTPSRedirect* client = nullptr;
 
 const int SampleCount = 500; // At 8900 samples per second, about 2 cycles of 60 Hz.
 float Samples[SampleCount];
@@ -59,8 +64,39 @@ void setup()
     Serial.print(".");
     encenderLED(1, 1000);
   }
-  Serial.println("¡Conectado a "+String(SSID)+"!");
+  Serial.print("¡Conectado a "+String(SSID)+"! ");
+  Serial.println(WiFi.localIP());
   encenderLED(5, 100);
+
+  // Inicia la comunicación HTTP (con redirección)
+  client = new HTTPSRedirect(httpsPort);
+  client->setInsecure();
+  client->setPrintResponseBody(true);
+  client->setContentTypeHeader("application/json");
+  
+  Serial.print("Conectando a ");
+  Serial.println(host);
+
+  // Try to connect for a maximum of 5 times
+  bool flag = false;
+  for (int i=0; i<5; i++){ 
+    int retval = client->connect(host, httpsPort);
+    if (retval == 1){
+       flag = true;
+       Serial.println("¡Conectado!");
+       break;
+    }
+    else
+      Serial.println("Conexión fallida. Reintentando...");
+  }
+  if (!flag){
+    Serial.print("No pudimos conectarnos a: ");
+    Serial.println(host);
+    return;
+  }
+  delete client;    // delete HTTPSRedirect object
+  client = nullptr; // delete HTTPSRedirect object
+
 }
 
 void loop()
@@ -68,8 +104,7 @@ void loop()
   // Ralizar el calculo de potencia con los sensores
   //Console_Power();
   
-  //  
-  Enviar_datos();
+  // Enviar_datos();
 }
 
 void Depurar_medicion()
@@ -109,35 +144,7 @@ void Enviar_datos()
 
 void Enviar_GoogleAppsScript(String body)
 {
-  HTTPClient http;
-  String url = "https://script.google.com/macros/s/" + GOOGLE_SCRIPT_ID + "/exec?hoja="+HOJA;
-  Serial.println("Subiendo datos a google sheets: " + url);
-  Serial.println(body);
 
-  // starts posting data to google sheet
-  http.begin(url.c_str());
-  // Le decimos al servidor que el cuerpo de la petición es en JSON
-  http.addHeader("Content-Type", "application/json");
-
-  http.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS);
-  int httpCode = http.POST(body);
-  Serial.print("HTTP Status Code: ");
-  Serial.println(httpCode);
-
-  // Respuesta de Google Apps Scripts Web
-  String payload;
-  payload = http.getString();
-  Serial.println("Cuerpo de respuesta HTTP: " + payload);  
-
-  if (httpCode > 0)
-  {
-    encenderLED(3, 100);
-  }
-  else
-  {
-    encenderLED(2, 500);
-  }
-  http.end();
 }
 
 void encenderLED(int veces, int retardo)
