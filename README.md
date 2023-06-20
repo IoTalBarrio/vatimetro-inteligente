@@ -3,9 +3,34 @@
 El google sheets donde estamos haciendo las pruebas de recolleción de datoa es <link>
 
 
+## Google Sheets
+1. Crear un Google Sheets
+2. Configura el archivo para que cualqueira con el link puede acceder al archivo
+3. Extrae el ID del archivo de la URL
+   ~~~shell
+   https://docs.google.com/spreadsheets/d/18LgNUzvpz2nXAxljXm-M7lh4k4oUYM0yrNcw7t4t3cE/edit?usp=sharing
+   GSS='18LgNUzvpz2nXAxljXm-M7lh4k4oUYM0yrNcw7t4t3cE'
+   ~~~
+4. 
+
 ## Google Apps Script
 
-<https://script.google.com/u/3/home/start>
+Por favor lee primero [Crea y administra implementaciones ](https://developers.google.com/apps-script/concepts/deployments?hl=es-419)
+
+Petición:
+~~~shell
+DEPKEY=<"Llave de despliegue">
+URL=https://script.google.com/macros/s/$DEPKEY/exec?hoja
+curl -L $URL
+curl -d "" -L $URL
+DATA=$(./generador.sh)
+curl -H 'Content-Type: application/json' -d $DATA -L $URL?hoja=test
+~~~
+
+Cada vez que hace hace un cambio se tiene que re-desplegar la web app
+
+
+### Pruebas
 
 ## Compilación ESP32
 
