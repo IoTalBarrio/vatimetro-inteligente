@@ -4,18 +4,21 @@
  */
 
 //----------------------------
-#include <HTTPSRedirect.h>
+#include <HTTPClient.h>
+#include <WiFi.h>
 #include <ArduinoJson.h>
 #include "variables.h"
 
 // Web app ID del despliegue webyGoogle Apps Script del desplie
 const String hoja = "test";
 const char *server = "script.google.com";
-const int httpsPort = 443;
 const char *fingerprint = "";
-String url = String("/macros/s/") + String(DEP_KEY) + "/exec?hoja=" + hoja;
-HTTPSRedirect *client = nullptr;
-String reponseBody = "";
+String url = "https://" + String(server) + String("/macros/s/") + String(DEP_KEY) + "/exec?hoja=" + hoja;
+HTTPClient http;
+int HTTPcode;
+String reponseBody;
+String locationRedirect;
+
 
 const int SampleCount = 500;  // At 8900 samples per second, about 2 cycles of 60 Hz.
 float Samples[SampleCount];
@@ -109,38 +112,29 @@ void Enviar_datos() {
 
 void Enviar_GoogleAppsScript(String payload) {
   Serial.println(payload);
-
-  client = new HTTPSRedirect(httpsPort);
-  client->setInsecure();
-  client->setPrintResponseBody(true);
-  client->setContentTypeHeader("application/json");
-
-  Serial.print("Conectando a ");
-  Serial.println(server);
-
-  // Try to connect for a maximum of 5 times
-  bool flag = false;
-  for (int i = 0; i < 5; i++) {
-    int retval = client->connect(server, httpsPort);
-    if (retval == 1) {
-      flag = true;
-      Serial.println("¡Conectado!");
-      break;
-    }
-  }
-  if (!flag) {
-    Serial.print("No pudimos conectarnos a: ");
-    Serial.println(server);
-  }
-
-  client->POST(url, server, payload, false);
-  Serial.println(client->getResponseBody());      
-  Serial.println(client->getStatusCode());
-  
-
-  delete client;     // delete HTTPSRedirect object
-  client = nullptr;  // delete HTTPSRedirect object
-  delay(7000);
+  http.begin(url);  
+  http.addHeader("Content-Type", "application/json"); // Indicamos que vasmo a entregar un JSON        
+  // Necesitamos agarrar los headers
+  const char *headerKeys[] = {"location"};
+  const size_t headerKeysCount = sizeof(headerKeys) / sizeof(headerKeys[0]);
+  http.collectHeaders(headerKeys, headerKeysCount);  
+  // Hacemos la peticion POST y obtenemos el codigo HTTP de respuesta
+  HTTPcode = http.POST(payload);
+  Serial.println("HTTP code:" + String(HTTPcode));
+  if (HTTPcode == 302) { // Si hay redirección (302)...
+    locationRedirect = http.header("location"); // Cogemos la url de redireccion
+    Serial.println("Redirección HTTP:" + locationRedirect);
+    // Cerramios la coneción anterior y abrimos otra
+    http.end();
+    http.begin(locationRedirect);  
+    HTTPcode = http.GET(); // Y hacemos una nueva petición peroo con GET
+    Serial.println("HTTP code (2):" + String(HTTPcode));
+    reponseBody = http.getString();
+    Serial.println("reponseBody: "+reponseBody);  
+  } else {
+    http.end();
+  }    
+  //     
 }
 
 void encenderLED(int veces, int retardo) {
