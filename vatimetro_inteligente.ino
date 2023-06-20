@@ -4,22 +4,10 @@
  */
 
 //----------------------------
-#include <HTTPClient.h>
-#include <WiFi.h>
 #include <ArduinoJson.h>
 #include "variables.h"
 
 // Web app ID del despliegue webyGoogle Apps Script del desplie
-const String hoja = "test";
-const char *server = "script.google.com";
-const char *fingerprint = "";
-String url = "https://" + String(server) + String("/macros/s/") + String(DEP_KEY) + "/exec?hoja=" + hoja;
-HTTPClient http;
-int HTTPcode;
-String reponseBody;
-String locationRedirect;
-
-
 const int SampleCount = 500;  // At 8900 samples per second, about 2 cycles of 60 Hz.
 float Samples[SampleCount];
 // Pines
@@ -37,8 +25,13 @@ float Samples[SampleCount];
 #define PIN_R_A 33
 
 // Data
-const int ARRAY_SIZE = 5;
-int testArray[ARRAY_SIZE];
+const int DELAY_MUESTREO = 150;
+const int ARRAY_SIZE = 10;
+int voltaje[ARRAY_SIZE];
+int corriente[ARRAY_SIZE];
+String voltaje_string;
+String corriente_string;
+int punteroRecolector = 0;
 
 /**
  *
@@ -52,89 +45,46 @@ void setup() {
   // Led de depuración
   pinMode(LED_BUILTIN, OUTPUT);
 
-  // Inicia la comunicacion WiFi
-  Serial.print("Conectando a Wi-Fi " + String(SSID));
-  WiFi.begin(SSID, PASSWORD);
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
-    encenderLED(1, 1000);
-  }
-  Serial.print("¡Conectado a " + String(SSID) + "! ");
-  Serial.println(WiFi.localIP());
   encenderLED(5, 100);
+  
+  
 }
 
 void loop() {
-
-  // Ralizar el calculo de potencia con los sensores
-  // Console_Power();
-
-  Enviar_datos();
-}
-
-void Depurar_medicion() {
-  Serial.println(analogRead(PIN_R_V));
-
-  delay(100);
-}
-
-void Enviar_datos() {
-  Serial.println("Enviando datos...");
-
-  String param;
-  for (int i = 0; i < ARRAY_SIZE; i++) {
-    testArray[i] = i * 10;
-  }
-
-  // Crear documento JSON
-  const size_t capacity = JSON_ARRAY_SIZE(ARRAY_SIZE);
-  StaticJsonDocument<capacity> doc;
-
-  JsonArray voltaje = doc.createNestedArray("voltaje");
-  JsonArray corriente = doc.createNestedArray("corriente");
-
-  // Migrar datos de array a Json array
-  for (size_t i = 0; i < ARRAY_SIZE; i++) {
-    voltaje.add(testArray[i]);
-  }
+  recolectar();
+  if (punteroRecolector >= ARRAY_SIZE) {
+    punteroRecolector = 0;
+    Serial.println(construirJson());
+  }   
   
-  for (size_t i = 0; i < ARRAY_SIZE; i++) {
-    corriente.add(testArray[i]);
-  }  
-
-  // convertir a cadena del JSON
-  String jsonString;
-  serializeJson(doc, jsonString);
-
-  Enviar_GoogleAppsScript(jsonString);
 }
 
-void Enviar_GoogleAppsScript(String payload) {
-  Serial.println(payload);
-  http.begin(url);  
-  http.addHeader("Content-Type", "application/json"); // Indicamos que vasmo a entregar un JSON        
-  // Necesitamos agarrar los headers
-  const char *headerKeys[] = {"location"};
-  const size_t headerKeysCount = sizeof(headerKeys) / sizeof(headerKeys[0]);
-  http.collectHeaders(headerKeys, headerKeysCount);  
-  // Hacemos la peticion POST y obtenemos el codigo HTTP de respuesta
-  HTTPcode = http.POST(payload);
-  Serial.println("HTTP code:" + String(HTTPcode));
-  if (HTTPcode == 302) { // Si hay redirección (302)...
-    locationRedirect = http.header("location"); // Cogemos la url de redireccion
-    Serial.println("Redirección HTTP:" + locationRedirect);
-    // Cerramios la coneción anterior y abrimos otra
-    http.end();
-    http.begin(locationRedirect);  
-    HTTPcode = http.GET(); // Y hacemos una nueva petición peroo con GET
-    Serial.println("HTTP code (2):" + String(HTTPcode));
-    reponseBody = http.getString();
-    Serial.println("reponseBody: "+reponseBody);  
-  } else {
-    http.end();
-  }    
-  //     
+void recolectar() {
+  voltaje[punteroRecolector] =  analogReadSim(PIN_Y_V);
+  corriente[punteroRecolector] =  analogReadSim(PIN_Y_A);
+  punteroRecolector++;
+  Serial.println(punteroRecolector);
+  delay(DELAY_MUESTREO);
+}
+
+String construirJson() {
+  voltaje_string = corriente_string = "[";
+  for (int i = 0; i < ARRAY_SIZE; i++) {
+      voltaje_string += voltaje[i];
+      corriente_string += corriente[i];
+      if (i < ARRAY_SIZE - 1) {
+          voltaje_string += ", ";
+          corriente_string += ", ";
+      }
+  }
+  voltaje_string += "]";
+  corriente_string += "]";
+  return String("{") + String("'voltaje:'") + voltaje_string + String(", ") + String("'corriente':") + corriente_string + String("}");
+ 
+}
+
+int analogReadSim(int pin) {
+  return random(4096);
 }
 
 void encenderLED(int veces, int retardo) {
