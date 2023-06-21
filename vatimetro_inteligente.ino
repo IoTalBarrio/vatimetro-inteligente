@@ -42,8 +42,8 @@ const int TIMEOUT = 20000;
  *  - El limite que Google Apps Script puede recibir
  *  - El tiempo en que Google Apps Script se demora en responder `http.setTimeout(15000);`
  */
-const int DELAY_MUESTREO = 24; // Se debe ajsutar de manera que la cola nunca se llene
 const int ARRAY_SIZE = 512; // De momento 512 genera un tamaño de datos que Google no rechaza
+const int DELAY_MUESTREO =0; // Se debe ajsutar de manera que la cola nunca se llene
 /**
   * MAX_MESSAGE_SIZE:
   * { "tamano": XXXX, A*3 } -> ~23
@@ -135,6 +135,7 @@ void Task2code(void *pvParameters)
   for (;;)
   {  
     recolectar(json);
+    delay(5000);
     enqueueMessage(json);
     if (punteroRecolector >= ARRAY_SIZE) punteroRecolector = 0;    
   }  
@@ -161,12 +162,12 @@ void recolectar(char* json)
   for (int i = 0; i < ARRAY_SIZE; i++)
   {    
     // [!] Cambiar `analogReadSim()`por `analogRead()` en producción:
-      voltaje_Y += analogReadSim(PIN_Y_V);
-    corriente_Y += analogReadSim(PIN_Y_A);
-      voltaje_B += analogReadSim(PIN_B_V);
-    corriente_B += analogReadSim(PIN_B_A);
-      voltaje_R += analogReadSim(PIN_R_V);
-    corriente_R += analogReadSim(PIN_R_A);        
+      voltaje_Y += analogRead(PIN_Y_V);
+    corriente_Y += analogRead(PIN_Y_A);
+      voltaje_B += analogRead(PIN_B_V);
+    corriente_B += analogRead(PIN_B_A);
+      voltaje_R += analogRead(PIN_R_V);
+    corriente_R += analogRead(PIN_R_A);        
     delay(DELAY_MUESTREO); // Es el intervalo de tiempo entre cada muestra 
 
     if (i < ARRAY_SIZE - 1) // Agregar coma si no es el final
