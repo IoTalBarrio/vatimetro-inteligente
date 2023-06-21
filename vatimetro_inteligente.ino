@@ -158,7 +158,7 @@ void recolectar(char* json)
     String voltaje_R  = "[";
   String corriente_R  = "[";      
   lectura = 1;  
-  for (int i = 0; i < ARRAY_SIZE; i++)
+  for (int i = 0; i < ARRAY_SIZE-1; i++)
   {    
     // [!] Cambiar `analogReadSim()`por `analogRead()` en producción:
       voltaje_Y += analogReadSim(PIN_Y_V);
@@ -166,10 +166,8 @@ void recolectar(char* json)
       voltaje_B += analogReadSim(PIN_B_V);
     corriente_B += analogReadSim(PIN_B_A);
       voltaje_R += analogReadSim(PIN_R_V);
-    corriente_R += analogReadSim(PIN_R_A);        
-    delay(DELAY_MUESTREO); // Es el intervalo de tiempo entre cada muestra 
-
-    if (i < ARRAY_SIZE - 1) // Agregar coma si no es el final
+    corriente_R += analogReadSim(PIN_R_A);            
+    if (i < ARRAY_SIZE - 1 -1) // Agregar coma si no es el final
     {
         voltaje_Y += ",";
       corriente_Y += ",";
@@ -177,8 +175,16 @@ void recolectar(char* json)
       corriente_B += ",";
         voltaje_R += ",";
       corriente_R += ",";            
+    } else {
+        voltaje_Y += " ";
+      corriente_Y += " ";
+        voltaje_B += " ";
+      corriente_B += " ";
+        voltaje_R += " ";
+      corriente_R += " ";             
     }
     lectura++;
+    delay(DELAY_MUESTREO); // Es el intervalo de tiempo entre cada muestra 
   }
   voltaje_Y   += "]";
   corriente_Y += "]";
@@ -186,9 +192,10 @@ void recolectar(char* json)
   corriente_B += "]";
   voltaje_R   += "]";
   corriente_R += "]";    
-  punteroRecolector++;
+  Serial.print("corriente_B:");
+  Serial.println(corriente_B);    
   strcpy(json, "{\"tamano\":");
-  strcat(json, String(ARRAY_SIZE).c_str());
+  strcat(json, String(ARRAY_SIZE-1).c_str());
   strcat(json, ",\"voltaje_Y\":");
   strcat(json, voltaje_Y.c_str());
   strcat(json, ",\"corriente_Y\":");
@@ -204,6 +211,7 @@ void recolectar(char* json)
   strcat(json, "}");
   Serial.print("Datos recolectados("+String(strlen(json))+ "): ");
   Serial.println(json);
+  punteroRecolector++;
 }
 
 void enqueueMessage(char* newMessage) {
@@ -241,13 +249,14 @@ void sendData()
 {
   if (messageCount > 0) {
     String extractedMessage = dequeueMessage();  
-    Serial.println(String("extractedMessage;") + extractedMessage);      
+    Serial.println(String("Async: extractedMessage;") + extractedMessage);      
     Enviar_GoogleAppsScript(extractedMessage);
   }
 }
 
 void Enviar_GoogleAppsScript(String payload) {
-  Serial.println("Async: Enviar a Google Apps Script: " + payload);
+  Serial.print("Async: Enviar a Google Apps Script: ");
+  Serial.println(payload);
   http.begin(url);  
   http.setTimeout(TIMEOUT); //
   http.addHeader("Content-Type", "application/json"); // Indicamos que vasmo a entregar un JSON        
@@ -283,6 +292,7 @@ void Enviar_GoogleAppsScript(String payload) {
       HTTPcode = http.GET(); // Y hacemos una nueva petición peroo con GET
       Serial.println("Async: HTTP code (2):" + String(HTTPcode));
       reponseBody = http.getString();
+      http.end();
       Serial.println("Async: reponseBody: "+reponseBody);  
       break;
     case -1:
@@ -312,7 +322,7 @@ int analogReadSim(int pin)
 }
 
 void generarSimData(){
-  for (int i = 0; i < ARRAY_SIZE; i++) {
+  for (int i = 0; i <= ARRAY_SIZE; i++) {
     const int amplitude = 4096;
     const int periods = 1;
     float value = (float)(round((amplitude/2) * sin(2 * PI * i / (periods * 256)) + 1) * 100 / 100)+(amplitude/2);
