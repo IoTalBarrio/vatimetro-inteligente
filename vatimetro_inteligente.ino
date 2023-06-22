@@ -39,9 +39,9 @@
  * 15490 bytes con DIM_MUESTREO = 512  * 
  */
 const int DIM_MUESTREO = 512; // De momento 512 genera un tamaño de datos que Google no rechaza
-const int DELAY_MUESTREO = 16; // (anteriormente ARRAY_SIZE) Se debe ajsutar de manera que la cola nunca se llene
+const int DELAY_MUESTREO = 10; // (anteriormente ARRAY_SIZE) Se debe ajsutar de manera que la cola nunca se llene
 const int MAX_MESSAGE_SIZE = 25+((35+(5*DIM_MUESTREO)*2)*3); // Tamaño del mensaje JSON
-const int QUEUE_SIZE = 2; // Tamaño máximo de la cola
+const int QUEUE_SIZE = 3; // Tamaño máximo de la cola
 char messageQueue[QUEUE_SIZE][MAX_MESSAGE_SIZE]; // Cola de mensajes
 int noMessageQueuedHit=0; // DEBUG: para contar cuantes veces el muestreo se pierde
 int punteroRecolector = 0;
@@ -59,10 +59,7 @@ const char *server = "script.google.com";
 const char *fingerprint = "";
 String URL = "https://" + String(server) + String("/macros/s/") + String(DEP_KEY) + "/exec?hoja=" + hoja;
 HTTPClient http;
-int HTTPcode;
 int IDpeticionHTTP = 1;
-String reponseBody;
-String locationRedirect;
 const bool DEBUG_HTTP = false; // Server-side: No procesa los datos sino los devulve directamente en el reponse body
 const int TIMEOUT = 20000;
 
@@ -253,9 +250,14 @@ void dequeueMessage()
 }
 
 void enviarPeticionHTTP(String payload) {
+  String reponseBody;
+  int HTTPcode;
+  int HTTPcode2;
+  String locationRedirect;
   Serial.print("Async: Petcción HTTP ("+String(IDpeticionHTTP)+"): ");
   Serial.println(payload);
   http.begin(URL);  
+  http.setReuse(true);// Habilitar la conexión persistente: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Keep-Alive
   http.setTimeout(TIMEOUT); //
   http.addHeader("Content-Type", "application/json"); // Indicamos que vasmo a entregar un JSON        
   // Necesitamos agarrar los headers
@@ -286,9 +288,9 @@ void enviarPeticionHTTP(String payload) {
       Serial.println("Async: Petcción HTTP ("+String(IDpeticionHTTP)+"): Redirección: " + locationRedirect);
       // Cerramios la coneción anterior y abrimos otra
       http.end();
-      http.begin(locationRedirect);  
-      HTTPcode = http.GET(); // Y hacemos una nueva petición peroo con GET
-      Serial.println("Async: Petcción HTTP ("+String(IDpeticionHTTP)+"): Redirección: HTTP code: " + String(HTTPcode));
+      http.begin(locationRedirect);              
+      HTTPcode2 = http.GET(); // Y hacemos una nueva petición peroo con GET
+      Serial.println("Async: Petcción HTTP ("+String(IDpeticionHTTP)+"): Redirección: HTTP code: " + String(HTTPcode2));
       reponseBody = http.getString();
       http.end();
       Serial.println("Async: Petcción HTTP ("+String(IDpeticionHTTP)+"): Redirección: reponseBody: "+reponseBody); 
@@ -337,7 +339,7 @@ int cantidad = DIM_MUESTREO;
 int limite = inicio + cantidad;
 void generarSimData(){
   for (int i = 0; i <= DIM_MUESTREO; i++) {
-    const int amplitude = 4096;
+    const int amplitude = 2700;
     const int periods = 4;
     float value = (float)(round((amplitude/2) * sin(2 * PI * i * periods / 256) + 1) * 100 / 100)+(amplitude/2);
     float randomValue = random(0, 100) / 100.0;  
