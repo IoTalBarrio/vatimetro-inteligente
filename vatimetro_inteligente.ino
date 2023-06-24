@@ -161,13 +161,13 @@ void recolectar(char* mensajePtr)
      * Medición de datos
      * [!] Cambiar `analogReadSim()`por `analogRead()` en producción: 
      */ 
-      voltaje_Y += analogReadSim(PIN_Y_V);
-    corriente_Y += analogReadSim(PIN_Y_A);
-      voltaje_B += analogReadSim(PIN_B_V);
-    corriente_B += analogReadSim(PIN_B_A);
-      voltaje_R += analogReadSim(PIN_R_V);
-    corriente_R += analogReadSim(PIN_R_A);        
-    delay(DELAY_MUESTREO); // Es el intervalo de tiempo entre cada muestra 
+      voltaje_Y += analogRead(PIN_Y_V);
+    corriente_Y += analogRead(PIN_Y_A);
+      voltaje_B += analogRead(PIN_B_V);
+    corriente_B += analogRead(PIN_B_A);
+      voltaje_R += analogRead(PIN_R_V);
+    corriente_R += analogRead(PIN_R_A);        
+    //delay(DELAY_MUESTREO); // Es el intervalo de tiempo entre cada muestra 
 
     if (i < DIM_MUESTREO - 1) // Agregar coma si no es el final
     {
@@ -179,7 +179,7 @@ void recolectar(char* mensajePtr)
       corriente_R += ",";            
     }
     lecturaSimIndex++; // Para la función `analogReadSim()` obtener el indice del arreglo de datos simiulados
-    delay(DELAY_MUESTREO); // Es el intervalo de tiempo entre cada muestra 
+    //delay(DELAY_MUESTREO); // Es el intervalo de tiempo entre cada muestra 
   }
     voltaje_Y += "]";
   corriente_Y += "]";
